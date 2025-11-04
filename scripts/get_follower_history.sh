@@ -32,19 +32,19 @@ git checkout main
 echo "Extracting follower data for ${USERNAME} in ${COUNTRY}..." >&2
 
 # Convert country name to title case for grep pattern
-COUNTRY_TITLE=$(echo "${COUNTRY}" | sed 's/\b\(.\)/\u\1/')
+COUNTRY_TITLE="${COUNTRY^}"
 
 # Get commit hashes for "Update [Country]" commits
 COMMIT_HASHES=$(git log --grep="Update ${COUNTRY_TITLE}" --format="%H")
 
 # Extract date and follower count for each commit
-echo "date,followers" > "${OUTPUT_FILE}"
+echo "date,followers" >"${OUTPUT_FILE}"
 
 while IFS= read -r commit_hash; do
   commit_date=$(git show -s --format="%ci" "${commit_hash}")
   follower_count=$(git show "${commit_hash}:cache/${COUNTRY}.json" | jq -r --arg user "${USERNAME}" '[.[] | select(.login == $user) | .followers] | if length == 0 then "N/A" else .[0] end')
   echo "${commit_date},${follower_count}"
-done <<< "${COMMIT_HASHES}" >> "${OUTPUT_FILE}"
+done <<<"${COMMIT_HASHES}" >>"${OUTPUT_FILE}"
 
 echo "Data saved to ${OUTPUT_FILE}" >&2
 cat "${OUTPUT_FILE}"

@@ -1,6 +1,7 @@
 # GitHub Follower History
 
-Track GitHub follower count history from [top-github-users](https://github.com/gayanvoice/top-github-users) and generate Mermaid charts.
+Track GitHub follower count history from [top-github-users](https://github.com/gayanvoice/top-github-users)
+and generate Mermaid charts.
 
 ## Features
 

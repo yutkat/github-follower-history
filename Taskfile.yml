@@ -57,26 +57,26 @@ tasks:
     desc: Run basic tests
     cmds:
       - chmod +x scripts/*.sh
-      - ./scripts/get_follower_history.sh japan yutkat test_output.csv
+      - ./scripts/get_follower_history.sh japan yutkat /tmp/test_output.csv
       - |
-        if [[ ! -f test_output.csv ]]; then
+        if [[ ! -f /tmp/test_output.csv ]]; then
           echo "Error: CSV file not created"
           exit 1
         fi
       - |
-        if [[ ! -s test_output.csv ]]; then
+        if [[ ! -s /tmp/test_output.csv ]]; then
           echo "Error: CSV file is empty"
           exit 1
         fi
       - echo "✓ get_follower_history.sh test passed"
-      - ./scripts/csv_to_mermaid.sh test_output.csv test_chart.md "" 10
+      - ./scripts/csv_to_mermaid.sh /tmp/test_output.csv /tmp/test_chart.md "" 10
       - |
-        if [[ ! -f test_chart.md ]]; then
+        if [[ ! -f /tmp/test_chart.md ]]; then
           echo "Error: Chart file not created"
           exit 1
         fi
       - |
-        if ! grep -q "xychart-beta" test_chart.md; then
+        if ! grep -q "xychart-beta" /tmp/test_chart.md; then
           echo "Error: Chart file does not contain mermaid chart"
           exit 1
         fi

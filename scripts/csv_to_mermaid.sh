@@ -42,7 +42,7 @@ dates=$(echo "${data}" | cut -d',' -f1 | cut -d' ' -f1 | sed 's/-[0-9][0-9]$//' 
 followers=$(echo "${data}" | cut -d',' -f2 | paste -sd ',' -)
 
 # Create mermaid chart
-cat > "${OUTPUT_FILE}" << EOF
+cat >"${OUTPUT_FILE}" <<EOF
 \`\`\`mermaid
 xychart-beta
   title "GitHub Followers History"
