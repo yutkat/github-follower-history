@@ -1,0 +1,96 @@
+version: "3"
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  format:
+    desc: Format shell scripts with shfmt
+    cmds:
+      - |
+        if ! command -v shfmt >/dev/null 2>&1; then
+          echo "shfmt not found. Install from https://github.com/mvdan/sh"
+          exit 1
+        fi
+        shfmt -w -i 2 -ci scripts/*.sh
+
+  check:
+    desc: Run all checks (markdown, shellcheck, shfmt)
+    deps:
+      - check:markdown
+      - check:shellcheck
+      - check:shfmt
+
+  check:markdown:
+    desc: Check markdown files
+    cmds:
+      - |
+        if ! command -v markdownlint-cli2 >/dev/null 2>&1; then
+          echo "markdownlint-cli2 not found. Install with: npm install -g markdownlint-cli2"
+          exit 1
+        fi
+        markdownlint-cli2 "**/*.md"
+
+  check:shellcheck:
+    desc: Run shellcheck
+    cmds:
+      - |
+        if ! command -v shellcheck >/dev/null 2>&1; then
+          echo "shellcheck not found. Install with: sudo apt-get install shellcheck"
+          exit 1
+        fi
+        shellcheck scripts/*.sh
+
+  check:shfmt:
+    desc: Check shell script formatting
+    cmds:
+      - |
+        if ! command -v shfmt >/dev/null 2>&1; then
+          echo "shfmt not found. Install from https://github.com/mvdan/sh"
+          exit 1
+        fi
+        shfmt -d -i 2 -ci scripts/*.sh
+
+  test:
+    desc: Run basic tests
+    cmds:
+      - chmod +x scripts/*.sh
+      - ./scripts/get_follower_history.sh japan yutkat test_output.csv
+      - |
+        if [[ ! -f test_output.csv ]]; then
+          echo "Error: CSV file not created"
+          exit 1
+        fi
+      - |
+        if [[ ! -s test_output.csv ]]; then
+          echo "Error: CSV file is empty"
+          exit 1
+        fi
+      - echo "✓ get_follower_history.sh test passed"
+      - ./scripts/csv_to_mermaid.sh test_output.csv test_chart.md "" 10
+      - |
+        if [[ ! -f test_chart.md ]]; then
+          echo "Error: Chart file not created"
+          exit 1
+        fi
+      - |
+        if ! grep -q "xychart-beta" test_chart.md; then
+          echo "Error: Chart file does not contain mermaid chart"
+          exit 1
+        fi
+      - echo "✓ csv_to_mermaid.sh test passed"
+      - echo "All tests passed!"
+
+  clean:
+    desc: Clean test artifacts
+    cmds:
+      - rm -f test_output.csv test_chart.md
+      - echo "Done"
+
+  ci:
+    desc: Run all CI checks
+    deps:
+      - check
+      - test

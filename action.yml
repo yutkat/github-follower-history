@@ -1,0 +1,82 @@
+name: "GitHub Follower History"
+description: "Fetch GitHub follower history from top-github-users and generate Mermaid chart"
+
+inputs:
+  country:
+    description: "Country name (e.g., japan, china, usa)"
+    required: true
+  username:
+    description: "GitHub username to track"
+    required: true
+  output-csv:
+    description: "Output CSV filename"
+    required: false
+    default: "follower_history.csv"
+  target-file:
+    description: "Target markdown file to update (inserts between <!--START_SECTION:github_follower_history--> and <!--END_SECTION:github_follower_history-->)"
+    required: true
+  start-date:
+    description: "Start date for chart (YYYY-MM-DD format). Empty means all data."
+    required: false
+    default: ""
+  max-labels:
+    description: "Maximum number of x-axis labels. Empty means no thinning."
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install dependencies
+      shell: bash
+      run: |
+        if ! command -v jq &> /dev/null; then
+          echo "Installing jq..."
+          sudo apt-get update && sudo apt-get install -y jq
+        fi
+
+    - name: Fetch follower history
+      shell: bash
+      run: |
+        chmod +x ${{ github.action_path }}/scripts/get_follower_history.sh
+        ${{ github.action_path }}/scripts/get_follower_history.sh "${{ inputs.country }}" "${{ inputs.username }}" "${{ inputs.output-csv }}"
+
+    - name: Generate Mermaid chart and update file
+      shell: bash
+      run: |
+        chmod +x ${{ github.action_path }}/scripts/csv_to_mermaid.sh
+
+        # Generate mermaid chart to temporary file
+        TEMP_CHART=$(mktemp)
+        ${{ github.action_path }}/scripts/csv_to_mermaid.sh "${{ inputs.output-csv }}" "${TEMP_CHART}" "${{ inputs.start-date }}" "${{ inputs.max-labels }}"
+
+        # Extract only the mermaid code block
+        MERMAID_CONTENT=$(cat "${TEMP_CHART}")
+
+        # Replace content between START_SECTION and END_SECTION markers
+        if [[ -f "${{ inputs.target-file }}" ]]; then
+          awk -v content="${MERMAID_CONTENT}" '
+            /<!--START_SECTION:github_follower_history-->/ {
+              print
+              print content
+              in_section = 1
+              next
+            }
+            /<!--END_SECTION:github_follower_history-->/ {
+              in_section = 0
+              print
+              next
+            }
+            !in_section { print }
+          ' "${{ inputs.target-file }}" > "${{ inputs.target-file }}.tmp"
+          mv "${{ inputs.target-file }}.tmp" "${{ inputs.target-file }}"
+        else
+          echo "Error: Target file ${{ inputs.target-file }} not found"
+          exit 1
+        fi
+
+        rm -f "${TEMP_CHART}"
+
+branding:
+  icon: "trending-up"
+  color: "blue"
