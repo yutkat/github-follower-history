@@ -31,10 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Generate Follower History
-        uses: ./
+        uses: yutkat/github-follower-history@v1
         with:
           country: japan
           username: yutkat
